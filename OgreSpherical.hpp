@@ -1,68 +1,73 @@
-#ifndef HGUARD_NETRUSH_ZONEVIEW_SPHERICAL_HPP__
-#define HGUARD_NETRUSH_ZONEVIEW_SPHERICAL_HPP__
+#ifndef HGUARD_OGRE_SPHERICAL_HPP__
+#define HGUARD_OGRE_SPHERICAL_HPP__
 
 #include <OgreMath.h>
 #include <OgreVector3.h>
 #include <OgreQuaternion.h>
 
-#include "api.hpp"
-
-namespace netrush {
-namespace zoneview {
+namespace Ogre {
 	
 	/** Spherical coordinates vector, used for spherical coordinates and transformations. 
 		Some example values:
-			( radius = 1.0, theta = 0.0deg , phi = 0.0deg  ) <=> Y unit vector in cartesian space
-			( radius = 1.0, theta = 90.0deg, phi = 0.0deg  ) <=> Z unit vector in cartesian space
+			( radius = 1.0, theta = 0.0deg  , phi = 0.0deg  ) <=> Y unit vector in cartesian space
+			( radius = 1.0, theta = 90.0deg , phi = 0.0deg  ) <=> Z unit vector in cartesian space
 			( radius = 1.0, theta = 90.0deg , phi = 90.0deg ) <=> X unit vector in cartesian space
 	*/
 	struct SphereVector
 	{
-		Ogre::Real   radius; ///< Rho or Radius is the distance from the center of the sphere.
-		Ogre::Radian theta;	 ///< Theta is the angle around the x axis (latitude angle counterclockwise), values range from 0 to PI.
-		Ogre::Radian phi;    ///< Phi is the angle around the y axis (longitude angle counterclockwise), values range from 0 to 2PI.
+		Real   radius; ///< Rho or Radius is the distance from the center of the sphere.
+		Radian theta;  ///< Theta is the angle around the x axis (latitude angle counterclockwise), values range from 0 to PI.
+		Radian phi;    ///< Phi is the angle around the y axis (longitude angle counterclockwise), values range from 0 to 2PI.
 		
-		NETRUSH_ZONEVIEW_API static const SphereVector ZERO;
-		NETRUSH_ZONEVIEW_API static const SphereVector UNIT_X;
-		NETRUSH_ZONEVIEW_API static const SphereVector UNIT_Y;
-		NETRUSH_ZONEVIEW_API static const SphereVector UNIT_Z;
-		NETRUSH_ZONEVIEW_API static const SphereVector NEGATIVE_UNIT_X;
-		NETRUSH_ZONEVIEW_API static const SphereVector NEGATIVE_UNIT_Y;
-		NETRUSH_ZONEVIEW_API static const SphereVector NEGATIVE_UNIT_Z;
+		// NOTE: if you need to expose these constants through a shared library api, add the export/import macro before each of 
+		// the following lines.
+		static const SphereVector ZERO;
+		static const SphereVector UNIT_X;
+		static const SphereVector UNIT_Y;
+		static const SphereVector UNIT_Z;
+		static const SphereVector NEGATIVE_UNIT_X;
+		static const SphereVector NEGATIVE_UNIT_Y;
+		static const SphereVector NEGATIVE_UNIT_Z;
 
-		SphereVector() = default;
-		SphereVector( Ogre::Real radius, Ogre::Radian theta, Ogre::Radian phi )
+		/// Default Constructor: no initialization of the values is performed.
+		SphereVector() {} 
+		
+		SphereVector( Real radius, Radian theta, Radian phi )
 			: radius( std::move(radius) ), theta( std::move(theta) ), phi( std::move(phi) )
 		{}
 
-		explicit SphereVector( const Ogre::Vector3& cartesian_vec )
+		/** Construction from a cartesian vector: the spherical vector will have the same relative position
+			but in spherical coordinates.
+			@see from_cartesian()
+		*/
+		explicit SphereVector( const Vector3& cartesian_vec )
 		{
 			*this = from_cartesian( cartesian_vec );
 		}
 
 
 		/** @return a relative Cartesian vector coordinate from this relative spherical coordinate. */
-		Ogre::Vector3 to_cartesian() const
+		Vector3 to_cartesian() const
 		{
-			Ogre::Vector3 result;
-			result.x = radius * Ogre::Math::Cos( phi ) * Ogre::Math::Sin( theta );
-			result.z = radius * Ogre::Math::Sin( phi ) * Ogre::Math::Sin( theta );
-			result.y = radius * Ogre::Math::Cos( theta );
+			Vector3 result;
+			result.x = radius * Math::Cos( phi ) * Math::Sin( theta );
+			result.z = radius * Math::Sin( phi ) * Math::Sin( theta );
+			result.y = radius * Math::Cos( theta );
 			return result;
 		}
 
 		/** @return a relative spherical coordinate from a cartesian vector. */
-		static SphereVector from_cartesian( const Ogre::Vector3& cartesian )
+		static SphereVector from_cartesian( const Vector3& cartesian )
 		{
 			SphereVector result;
 			result.radius = cartesian.length();
-			result.phi = Ogre::Math::ATan( cartesian.z / cartesian.x );
-			result.theta = Ogre::Math::ACos( cartesian.y / result.radius );
+			result.phi = Math::ATan( cartesian.z / cartesian.x );
+			result.theta = Math::ACos( cartesian.y / result.radius );
 			return result;
 		}
 
 		/** @return a relative rotation from the provided axis to the axis corresponding to this relative spherical vector. */
-		Ogre::Quaternion rotation_from( const Ogre::Vector3& axis ) const
+		Quaternion rotation_from( const Vector3& axis ) const
 		{
 			const auto relative_direction = to_cartesian();
 			return axis.getRotationTo( relative_direction );
@@ -104,7 +109,7 @@ namespace zoneview {
 		}
 
 		/// Rotation of the position around the relative center of the sphere.
-		friend SphereVector operator*( const SphereVector& sv, const Ogre::Quaternion& rotation )
+		friend SphereVector operator*( const SphereVector& sv, const Quaternion& rotation )
 		{
 			auto cartesian = sv.to_cartesian();
 			cartesian = rotation * cartesian;
@@ -112,19 +117,18 @@ namespace zoneview {
 		}
 
 		/// Rotation of the position around the relative center of the sphere.
-		friend SphereVector operator*( const Ogre::Quaternion& rotation, const SphereVector& sv ) { return sv * rotation; }
+		friend SphereVector operator*( const Quaternion& rotation, const SphereVector& sv ) { return sv * rotation; }
 
 		/// Rotation of the position around the relative center of the sphere.
-		SphereVector& operator*=( const Ogre::Quaternion& rotation ) 
+		SphereVector& operator*=( const Quaternion& rotation ) 
 		{
 			*this = *this * rotation;
 			return *this;
 		}
 
-
 	};
 	
-}}
+}
 
 
 #endif
