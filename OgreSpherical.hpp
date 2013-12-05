@@ -127,6 +127,20 @@ namespace Ogre {
 			*this = *this * rotation;
 			return *this;
 		}
+		
+		friend bool operator==( const SphereVector& left, const SphereVector& right )
+		{
+			return left.radius == right.radius
+				&& left.phi == right.phi
+				&& left.theta == right.theta
+				;
+		}
+
+		friend bool operator!=( const SphereVector& left, const SphereVector& right )
+		{
+			return !( left == right );
+		}
+
 
 	};
 	
