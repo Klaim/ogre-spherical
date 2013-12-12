@@ -60,11 +60,12 @@ namespace Ogre {
 		/** @return a relative spherical coordinate from a cartesian vector. */
 		static SphereVector from_cartesian( const Ogre::Vector3& cartesian )
 		{
-			using namespace Ogre;
-			SphereVector result;
+			SphereVector result = SphereVector::ZERO;
 			result.radius = cartesian.length();
-			result.phi    = cartesian.x   > Real(0) || cartesian.x   < Real(0) ? Math::ATan( cartesian.z / cartesian.x )   : Math::ATan( 0 );
-			result.theta  = result.radius > Real(0) || result.radius < Real(0) ? Math::ACos( cartesian.y / result.radius ) : Math::ACos( 0 );
+			if( result.radius == 0 )
+				return result;
+			result.phi    = Math::ATan2( cartesian.x, cartesian.z );
+			result.theta  = Math::ATan2( Math::Sqrt( Math::Sqr( cartesian.x ) + Math::Sqr( cartesian.z ) ), cartesian.y );
 			return result;
 		}
 
